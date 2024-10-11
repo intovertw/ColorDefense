@@ -1,26 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
-using UnityEditor;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class player : MonoBehaviour
 {
-    public Material[] playerColors; 
-    public GameObject bulletPrefab;
-    public float range = 5f, rateOfFire = 1f;
+    float range = 5f, rateOfFire;
     public LayerMask enemyMask;
+    public Animator animator;
+
     private Transform target;
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            
-        }
-
         if (target == null)
         {
             FindTarget();
@@ -33,23 +23,28 @@ public class player : MonoBehaviour
         }
         else
         {
+            Vector3 targetDirection = target.position - transform.position;
+            Vector3 newDirection = Vector3.RotateTowards(transform.forward, targetDirection, 1, 0.0f);
+            transform.rotation = Quaternion.LookRotation(new Vector3(newDirection.x, 0, newDirection.z));
+
             rateOfFire += Time.fixedDeltaTime;
-            if (rateOfFire >= 10f)
+            if (rateOfFire >= 1f)
             {
                 Debug.Log("attempting to shoot");
+                animator.SetTrigger("isShoot");
                 shoot();
                 rateOfFire = 0f;
             }
         }
     }
 
-    bool CheckTargetIsInRange()
+    protected bool CheckTargetIsInRange()
     {
         Debug.Log(Vector2.Distance(target.position, transform.position) <= range);
         return Vector2.Distance(target.position, transform.position) <= range;
     }
 
-    void FindTarget()
+    protected void FindTarget()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, range, enemyMask);
         if (hits.Length > 0)
@@ -59,15 +54,14 @@ public class player : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmosSelected()
+    protected void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, range);
     }
-    void shoot()
+    protected virtual void shoot()
     {
         Debug.Log("CHECK YOSELF FOOL");
         //where all the shooting happens
-        Instantiate(bulletPrefab, transform.position, transform.rotation);
     }
 }
